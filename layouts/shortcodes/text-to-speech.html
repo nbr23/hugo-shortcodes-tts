@@ -1,0 +1,33 @@
+{{- $title := $.Page.Title -}}
+{{- $content := .Inner | replaceRE `(?s)<!-- noTTS -->.*?<!-- /noTTS -->` "" -}}
+{{- $content := $content | markdownify | plainify | htmlUnescape -}}
+{{- $content := print $title "\n\n" $content -}}
+
+
+{{- $filename := .Page.File.ContentBaseName -}}
+{{- $apiEndpoint := .Site.Params.Tts.ApiUrl -}}
+
+{{- $jsonData := dict "text" $content -}}
+{{- $jsonBody := $jsonData | jsonify -}}
+
+{{- $opts := dict 
+   "method" "post"
+   "body" $jsonBody
+   "headers" (dict "Content-Type" "application/json")
+-}}
+
+{{- $response := resources.GetRemote $apiEndpoint $opts -}}
+
+{{- with $response -}}
+  {{- $audioResource := .Content | resources.FromString (printf "%s.wav" $filename) -}}
+  {{- $audioURL := $audioResource.Permalink -}}
+  <div class="text-to-speech-container">
+    <span class="text-to-speech-label">Listen to this post:</span>
+    <audio class="text-to-speech-audio" controls>
+      <source src="{{ $audioURL }}" type="audio/wav">
+      Your browser does not support the audio element.
+    </audio>
+  </div>
+{{- else -}}
+{{- end -}}
+{{- .Inner | markdownify -}}
