@@ -19,7 +19,7 @@
 {{- $response := resources.GetRemote $apiEndpoint $opts -}}
 
 {{- with $response -}}
-  {{- $audioResource := .Content | resources.FromString (printf "%s.wav" $filename) -}}
+  {{- $audioResource := .Content | resources.FromString (printf "audio/tts/%s.wav" $filename) -}}
   {{- $audioURL := $audioResource.Permalink -}}
   <div class="text-to-speech-container">
     <span class="text-to-speech-label">Listen to this post:</span>
