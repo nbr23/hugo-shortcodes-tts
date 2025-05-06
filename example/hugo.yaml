@@ -1,0 +1,31 @@
+baseURL: 'https://example.org/'
+languageCode: 'en-us'
+title: 'My New Hugo Site'
+
+theme: ['ananke', 'hugo-shortcodes-tts']
+
+params:
+  tts:
+    apiUrl: "http://tts-api:8080/api/tts"
+
+security:
+  http:
+    contentTypes:
+      - "audio/wav"
+    mediaTypes:
+      - "audio/wav"
+    methods:
+    - (?i)GET|POST
+    urls:
+    - .*
+
+mediaTypes:
+  "audio/wav":
+    suffixes: 
+      - wav
+
+outputFormats:
+  WAV:
+    mediaType: "audio/wav"
+    isPlainText: false
+    isHTML: false

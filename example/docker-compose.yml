@@ -1,0 +1,25 @@
+services:
+  tts-api:
+    image: nbr23/gopipertts
+    environment:
+      PORT: 8080
+      PRELOAD_VOICES: en_US-amy-low
+    volumes:
+      - ".voices:/voices"
+  hugo:
+    image: nbr23/hugo
+    volumes:
+      - .:/www
+    working_dir: /www
+    command: hugo --ignoreCache
+  hugo-serve:
+    image: nbr23/hugo
+    ports:
+      - 0.0.0.0:1313:1313
+    volumes:
+      - .:/www
+    working_dir: /www
+    command: hugo serve --baseURL http://localhost:1313/ --bind 0.0.0.0 --ignoreCache
+    depends_on:
+      tts-api:
+        condition: service_healthy
