@@ -1,6 +1,6 @@
 # hugo-shortcodes-tts
 
-[Hugo](https://gohugo.io/) shortcode leveraging [gopipertts](github.com/nbr23/gopipertts) to add a "Listen to this post" feature to you hugo posts.
+[Hugo](https://gohugo.io/) shortcode leveraging [gopipertts](https://github.com/nbr23/gopipertts) to add a "Listen to this post" feature to you hugo posts.
 
 ## Usage
 
