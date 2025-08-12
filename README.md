@@ -17,6 +17,7 @@ theme: [..., 'hugo-shortcodes-tts']
 params:
   tts:
     apiUrl: "http://tts-api:8080/api/tts"
+    disabled: false  # Optional: set to true to disable TTS (useful during drafting/testing)
 ```
 
 or
@@ -25,6 +26,7 @@ or
 theme = [..., 'hugo-shortcodes-tts']
 [Params.Tts]
   ApiUrl = "http://tts-api:8080/api/tts"
+  Disabled = false  # Optional: set to true to disable TTS (useful during drafting/testing)
 ```
 
 You will likely need to increase the timeout for page generation as well as the TTS process can take a while

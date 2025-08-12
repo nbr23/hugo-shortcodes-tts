@@ -1,3 +1,4 @@
+{{- if not .Site.Params.Tts.Disabled -}}
 {{- $title := $.Page.Title -}}
 {{- $content := .Inner | replaceRE `(?s)<!-- noTTS -->.*?<!-- /noTTS -->` "" -}}
 {{- $content := $content | markdownify | plainify | htmlUnescape -}}
@@ -29,5 +30,6 @@
     </audio>
   </div>
 {{- else -}}
+{{- end -}}
 {{- end -}}
 {{- .Inner | markdownify -}}
