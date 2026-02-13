@@ -26,9 +26,17 @@
     <span class="text-to-speech-label">Listen to this post:</span>
     <audio class="text-to-speech-audio" controls>
       <source src="{{ $audioURL }}" type="audio/wav">
-      Your browser does not support the audio element.
     </audio>
   </div>
+  <script>
+    (function() {
+      var a = document.createElement('audio');
+      if (a.canPlayType && a.canPlayType('audio/wav')) {
+        var els = document.querySelectorAll('.text-to-speech-container');
+        for (var i = 0; i < els.length; i++) els[i].style.display = 'flex';
+      }
+    })();
+  </script>
 {{- else -}}
 {{- end -}}
 {{- end -}}

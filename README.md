@@ -33,6 +33,20 @@ You will likely need to increase the timeout for page generation as well as the 
 
 `timeout: 120s`
 
+### Styling
+
+The shortcode renders a `.text-to-speech-container` div that is hidden by default and displayed via JavaScript when the browser supports audio playback. You'll need to add some CSS to style it. For example:
+
+```css
+.text-to-speech-container {
+  display: none;
+  align-items: center;
+  gap: 16px;
+}
+```
+
+The `display: none` is required — the shortcode's inline script sets it to `flex` when the browser can play the audio.
+
 ### Add shortcode to posts
 
 In your hugo posts, add the following tags at beginning and end:
