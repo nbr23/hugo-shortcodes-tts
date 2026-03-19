@@ -1,7 +1,18 @@
 {{- if not .Site.Params.Tts.Disabled -}}
 {{- $title := $.Page.Title -}}
 {{- $content := .Inner | replaceRE `(?s)<!-- noTTS -->.*?<!-- /noTTS -->` "" -}}
-{{- $content := $content | markdownify | plainify | htmlUnescape -}}
+{{- $content := $content | markdownify -}}
+<!-- various hacks to get more natural pauses in the speech -->
+{{- $content := $content | replaceRE `</h[1-6]>` "\n\n" -}}
+{{- $content := $content | replaceRE `</p>` "\n\n" -}}
+{{- $content := $content | replaceRE `</li>` "\n" -}}
+{{- $content := $content | replaceRE `</[uo]l>` "\n" -}}
+{{- $content := $content | replaceRE `<br\s*/?>` "\n" -}}
+{{- $content := $content | replaceRE `<[^>]*>` "" -}}
+{{- $content := $content | htmlUnescape -}}
+<!-- get some pauses before/after parenthesis -->
+{{- $content := $content | replaceRE `\(` ", " -}}
+{{- $content := $content | replaceRE `\)` ", " -}}
 {{- $content := print $title "\n\n" $content -}}
 
 
