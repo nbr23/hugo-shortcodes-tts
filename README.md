@@ -18,6 +18,7 @@ params:
   tts:
     apiUrl: "http://tts-api:8080/api/tts"
     disabled: false  # Optional: set to true to disable TTS (useful during drafting/testing)
+    outputFormat: "mp3"  # Optional: "mp3" (default) or "wav"
 ```
 
 or
@@ -27,6 +28,7 @@ theme = [..., 'hugo-shortcodes-tts']
 [Params.Tts]
   ApiUrl = "http://tts-api:8080/api/tts"
   Disabled = false  # Optional: set to true to disable TTS (useful during drafting/testing)
+  OutputFormat = "mp3"  # Optional: "mp3" (default) or "wav"
 ```
 
 You will likely need to increase the timeout for page generation as well as the TTS process can take a while
@@ -58,6 +60,12 @@ title: XXX
 {{< text-to-speech >}}
 [POST CONTENT]
 {{< /text-to-speech >}}
+```
+
+The `outputFormat` parameter can be set per-shortcode to override the site-wide default:
+
+```
+{{< text-to-speech outputFormat="mp3" >}}
 ```
 
 To exclude specific regions from being spoken, you can use the `<!-- noTTS -->` tags:

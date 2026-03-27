@@ -18,11 +18,12 @@
 
 {{- $filename := .Page.File.ContentBaseName -}}
 {{- $apiEndpoint := .Site.Params.Tts.ApiUrl -}}
+{{- $outputFormat := .Get "outputFormat" | default (.Site.Params.Tts.OutputFormat | default "mp3") -}}
 
-{{- $jsonData := dict "text" $content -}}
+{{- $jsonData := dict "text" $content "outputFormat" $outputFormat -}}
 {{- $jsonBody := $jsonData | jsonify -}}
 
-{{- $opts := dict 
+{{- $opts := dict
    "method" "post"
    "body" $jsonBody
    "headers" (dict "Content-Type" "application/json")
@@ -31,12 +32,12 @@
 {{- $response := resources.GetRemote $apiEndpoint $opts -}}
 
 {{- with $response -}}
-  {{- $audioResource := .Content | resources.FromString (printf "audio/tts/%s.wav" $filename) -}}
+  {{- $audioResource := .Content | resources.FromString (printf "audio/tts/%s.%s" $filename $outputFormat) -}}
   {{- $audioURL := $audioResource.Permalink -}}
   <div class="text-to-speech-container">
     <span class="text-to-speech-label">Listen to this post:</span>
     <audio class="text-to-speech-audio" controls>
-      <source src="{{ $audioURL }}" type="audio/wav">
+      <source src="{{ $audioURL }}" type="{{ if eq $outputFormat "mp3" }}audio/mpeg{{ else }}audio/wav{{ end }}">
     </audio>
   </div>
   <script>
