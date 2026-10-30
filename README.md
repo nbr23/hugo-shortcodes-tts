@@ -57,6 +57,16 @@ The shortcode renders a `.text-to-speech-container` div that is hidden by defaul
 
 The `display: none` is required — the shortcode's inline script sets it to `flex` when the browser can play the audio.
 
+Once playback has started, the container gets a `.text-to-speech-started` class that stays on even when paused. Use it to keep the player in view while scrolling:
+
+```css
+.text-to-speech-container.text-to-speech-started {
+  position: sticky;
+  top: 0;
+  background: #fff;
+}
+```
+
 ### Add shortcode to posts
 
 In your hugo posts, add the following tags at beginning and end:

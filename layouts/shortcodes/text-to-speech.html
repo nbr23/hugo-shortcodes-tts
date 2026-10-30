@@ -83,6 +83,12 @@
         var els = document.querySelectorAll('.text-to-speech-container');
         for (var i = 0; i < els.length; i++) els[i].style.display = 'flex';
       }
+      var players = document.querySelectorAll('.text-to-speech-audio');
+      for (var j = 0; j < players.length; j++) {
+        players[j].addEventListener('play', function() {
+          this.parentNode.classList.add('text-to-speech-started');
+        }, { once: true });
+      }
     })();
   </script>
 {{- else -}}
