@@ -19,6 +19,9 @@ params:
     apiUrl: "http://tts-api:8080/api/tts"
     disabled: false  # Optional: set to true to disable TTS (useful during drafting/testing)
     outputFormat: "mp3"  # Optional: "mp3" (default) or "wav"
+    provider: "gopipertts"  # Optional: "gopipertts" (default) or "openai"
+    voice: "default"  # Optional, openai provider only: voice name sent to the server
+    timeout: "10m"  # Optional: per-request timeout (default 10m)
 ```
 
 or
@@ -29,7 +32,12 @@ theme = [..., 'hugo-shortcodes-tts']
   ApiUrl = "http://tts-api:8080/api/tts"
   Disabled = false  # Optional: set to true to disable TTS (useful during drafting/testing)
   OutputFormat = "mp3"  # Optional: "mp3" (default) or "wav"
+  Provider = "gopipertts"  # Optional: "gopipertts" (default) or "openai"
+  Voice = "default"  # Optional, openai provider only: voice name sent to the server
+  Timeout = "10m"  # Optional: per-request timeout (default 10m)
 ```
+
+With `provider: "openai"`, `apiUrl` points at any OpenAI-compatible speech endpoint, e.g. Phonon's [ptts-openai-server](https://github.com/gradium-ai/xn-ptts) at `http://phonon:8880/v1/audio/speech`. Text is sent in chunks of at most 4000 characters and the audio is concatenated, so posts longer than that require `mp3`.
 
 You will likely need to increase the timeout for page generation as well as the TTS process can take a while
 
@@ -67,6 +75,8 @@ The `outputFormat` parameter can be set per-shortcode to override the site-wide 
 ```
 {{< text-to-speech outputFormat="mp3" >}}
 ```
+
+`voice` can be overridden the same way.
 
 To exclude specific regions from being spoken, you can use the `<!-- noTTS -->` tags:
 

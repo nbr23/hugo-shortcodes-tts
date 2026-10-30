@@ -18,21 +18,57 @@
 
 {{- $filename := .Page.File.ContentBaseName -}}
 {{- $apiEndpoint := .Site.Params.Tts.ApiUrl -}}
+{{- $provider := .Site.Params.Tts.Provider | default "gopipertts" -}}
 {{- $outputFormat := .Get "outputFormat" | default (.Site.Params.Tts.OutputFormat | default "mp3") -}}
+{{- $voice := .Get "voice" | default .Site.Params.Tts.Voice -}}
+{{- $timeout := .Site.Params.Tts.Timeout | default "10m" -}}
 
-{{- $jsonData := dict "text" $content "outputFormat" $outputFormat -}}
-{{- $jsonBody := $jsonData | jsonify -}}
+{{- $bodies := slice -}}
+{{- if eq $provider "openai" -}}
+  {{- $chunks := slice -}}
+  {{- $chunk := "" -}}
+  {{- range split $content "\n" -}}
+    {{- if and $chunk (gt (add (len $chunk) (len .) 1) 4000) -}}
+      {{- $chunks = $chunks | append $chunk -}}
+      {{- $chunk = . -}}
+    {{- else if $chunk -}}
+      {{- $chunk = print $chunk "\n" . -}}
+    {{- else -}}
+      {{- $chunk = . -}}
+    {{- end -}}
+  {{- end -}}
+  {{- with trim $chunk " \n" -}}
+    {{- $chunks = $chunks | append . -}}
+  {{- end -}}
+  {{- if and (gt (len $chunks) 1) (ne $outputFormat "mp3") -}}
+    {{- errorf "text-to-speech: %s needs %d requests, only mp3 output can be joined" $filename (len $chunks) -}}
+  {{- end -}}
+  {{- range $chunks -}}
+    {{- $body := dict "input" . "response_format" $outputFormat -}}
+    {{- with $voice -}}
+      {{- $body = merge $body (dict "voice" .) -}}
+    {{- end -}}
+    {{- $bodies = $bodies | append $body -}}
+  {{- end -}}
+{{- else -}}
+  {{- $bodies = $bodies | append (dict "text" $content "outputFormat" $outputFormat) -}}
+{{- end -}}
 
-{{- $opts := dict
-   "method" "post"
-   "body" $jsonBody
-   "headers" (dict "Content-Type" "application/json")
--}}
+{{- $audio := "" -}}
+{{- range $bodies -}}
+  {{- $opts := dict
+     "method" "post"
+     "body" (. | jsonify)
+     "headers" (dict "Content-Type" "application/json")
+     "timeout" $timeout
+  -}}
+  {{- with resources.GetRemote $apiEndpoint $opts -}}
+    {{- $audio = print $audio .Content -}}
+  {{- end -}}
+{{- end -}}
 
-{{- $response := resources.GetRemote $apiEndpoint $opts -}}
-
-{{- with $response -}}
-  {{- $audioResource := .Content | resources.FromString (printf "audio/tts/%s.%s" $filename $outputFormat) -}}
+{{- with $audio -}}
+  {{- $audioResource := . | resources.FromString (printf "audio/tts/%s.%s" $filename $outputFormat) -}}
   {{- $audioURL := $audioResource.Permalink -}}
   <div class="text-to-speech-container">
     <span class="text-to-speech-label">Listen to this post:</span>
