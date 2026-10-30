@@ -107,6 +107,18 @@ And we will resume speaking here
 {{< /text-to-speech >}}
 ```
 
+### Speech text
+
+Before the text is sent, it is rewritten so it reads better aloud:
+
+- Fenced code blocks are never spoken
+- Inline code is wrapped in double quotes: `` `CLAUDE.md` `` becomes `"CLAUDE dot md"`
+- Headers, list items and the title get a trailing `.` (unless they already end in punctuation) to force a pause
+- `e.g.`, `i.e.`, `etc.` and `vs.` are expanded
+- A dot followed by a lowercase letter is spoken: `settings.json` becomes `settings dot json`, `.git` becomes `dot git`
+- Underscores between words become spaces, ` & ` becomes ` and `
+- Parentheses become commas
+
 ### Generate TTS
 
 See the example project for a sample configuration and Makefile to build your static site with TTS:
