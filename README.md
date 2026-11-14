@@ -21,6 +21,9 @@ params:
     outputFormat: "mp3"  # Optional: "mp3" (default) or "wav"
     provider: "gopipertts"  # Optional: "gopipertts" (default) or "openai"
     voice: "default"  # Optional, openai provider only: voice name sent to the server
+    model: "gpt-4o-mini-tts"  # Optional, openai provider only: model name sent to the server
+    speed: 1.0  # Optional, openai provider only: playback speed sent to the server
+    instructions: "Speak calmly"  # Optional, openai provider only: voice instructions sent to the server
     timeout: "10m"  # Optional: per-request timeout (default 10m)
 ```
 
@@ -34,10 +37,48 @@ theme = [..., 'hugo-shortcodes-tts']
   OutputFormat = "mp3"  # Optional: "mp3" (default) or "wav"
   Provider = "gopipertts"  # Optional: "gopipertts" (default) or "openai"
   Voice = "default"  # Optional, openai provider only: voice name sent to the server
+  Model = "gpt-4o-mini-tts"  # Optional, openai provider only: model name sent to the server
+  Speed = 1.0  # Optional, openai provider only: playback speed sent to the server
+  Instructions = "Speak calmly"  # Optional, openai provider only: voice instructions sent to the server
   Timeout = "10m"  # Optional: per-request timeout (default 10m)
 ```
 
 With `provider: "openai"`, `apiUrl` points at any OpenAI-compatible speech endpoint, e.g. Phonon's [ptts-openai-server](https://github.com/gradium-ai/xn-ptts) at `http://phonon:8880/v1/audio/speech`. Text is sent in chunks of at most 4000 characters and the audio is concatenated, so posts longer than that require `mp3`.
+
+`voice`, `model`, `speed` and `instructions` are only sent when set, so a server that rejects one of them can be used by leaving it out.
+
+#### OpenAI API
+
+The OpenAI API requires `model` and `voice`, and an API key:
+
+```yaml
+params:
+  tts:
+    provider: "openai"
+    apiUrl: "https://api.openai.com/v1/audio/speech"
+    model: "gpt-4o-mini-tts"
+    voice: "alloy"
+security:
+  http:
+    mediaTypes:
+      - "audio/mpeg"
+    methods:
+      - (?i)GET|POST
+    urls:
+      - ^https://api\.openai\.com/
+```
+
+The key is read from `params.tts.apiKey` and sent as `Authorization: Bearer <key>` (openai provider only). Do not put it in your config file: pass it through the environment, which Hugo maps onto that param:
+
+```bash
+HUGO_PARAMS_TTS_APIKEY=sk-... hugo
+```
+
+Hugo caches remote responses keyed on the URL and the request options (body and headers), so an unchanged post is not sent again, and changing the text, the key or any of the params above regenerates its audio.
+
+A failed request (error status, unreachable server, empty response) fails the build with the post name and the server's response.
+
+Hugo 0.141 or later is required.
 
 You will likely need to increase the timeout for page generation as well as the TTS process can take a while
 
@@ -86,7 +127,7 @@ The `outputFormat` parameter can be set per-shortcode to override the site-wide 
 {{< text-to-speech outputFormat="mp3" >}}
 ```
 
-`voice` can be overridden the same way.
+`voice`, `model`, `speed` and `instructions` can be overridden the same way.
 
 To exclude specific regions from being spoken, you can use the `<!-- noTTS -->` tags:
 

@@ -12,8 +12,10 @@ security:
   http:
     contentTypes:
       - "audio/wav"
+      - "audio/mpeg"
     mediaTypes:
       - "audio/wav"
+      - "audio/mpeg"
     methods:
     - (?i)GET|POST
     urls:

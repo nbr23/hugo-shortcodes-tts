@@ -7,10 +7,17 @@
 {{- $provider := .Site.Params.Tts.Provider | default "gopipertts" -}}
 {{- $outputFormat := .Get "outputFormat" | default (.Site.Params.Tts.OutputFormat | default "mp3") -}}
 {{- $voice := .Get "voice" | default .Site.Params.Tts.Voice -}}
+{{- $model := .Get "model" | default .Site.Params.Tts.Model -}}
+{{- $speed := .Get "speed" | default .Site.Params.Tts.Speed -}}
+{{- $instructions := .Get "instructions" | default .Site.Params.Tts.Instructions -}}
 {{- $timeout := .Site.Params.Tts.Timeout | default "10m" -}}
 
+{{- $headers := dict "Content-Type" "application/json" -}}
 {{- $bodies := slice -}}
 {{- if eq $provider "openai" -}}
+  {{- with .Site.Params.Tts.ApiKey -}}
+    {{- $headers = merge $headers (dict "Authorization" (print "Bearer " .)) -}}
+  {{- end -}}
   {{- $chunks := slice -}}
   {{- $chunk := "" -}}
   {{- range split $content "\n" -}}
@@ -34,6 +41,15 @@
     {{- with $voice -}}
       {{- $body = merge $body (dict "voice" .) -}}
     {{- end -}}
+    {{- with $model -}}
+      {{- $body = merge $body (dict "model" .) -}}
+    {{- end -}}
+    {{- with $speed -}}
+      {{- $body = merge $body (dict "speed" (float .)) -}}
+    {{- end -}}
+    {{- with $instructions -}}
+      {{- $body = merge $body (dict "instructions" .) -}}
+    {{- end -}}
     {{- $bodies = $bodies | append $body -}}
   {{- end -}}
 {{- else -}}
@@ -45,11 +61,22 @@
   {{- $opts := dict
      "method" "post"
      "body" (. | jsonify)
-     "headers" (dict "Content-Type" "application/json")
+     "headers" $headers
      "timeout" $timeout
   -}}
-  {{- with resources.GetRemote $apiEndpoint $opts -}}
-    {{- $audio = print $audio .Content -}}
+  {{- with try (resources.GetRemote $apiEndpoint $opts) -}}
+    {{- with .Err -}}
+      {{- $detail := . -}}
+      {{- $data := .Cause.Data -}}
+      {{- with $data.Status -}}
+        {{- $detail = printf "%s %.500s" . $data.Body -}}
+      {{- end -}}
+      {{- errorf "text-to-speech: %s: %s: %s" $filename $apiEndpoint $detail -}}
+    {{- else with .Value -}}
+      {{- $audio = print $audio .Content -}}
+    {{- else -}}
+      {{- errorf "text-to-speech: %s: %s returned no audio (404)" $filename $apiEndpoint -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 
