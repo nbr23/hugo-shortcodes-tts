@@ -1,8 +1,19 @@
-{{- $title := .title -}}
+{{- $rules := .rules | default slice -}}
+{{- $title := partial "tts/substitute.html" (dict "text" .title "rules" $rules) -}}
 {{- if not (findRE `[.?!:;,]$` $title) -}}
   {{- $title = print $title "." -}}
 {{- end -}}
 {{- $content := .inner | replaceRE `(?s)<!-- noTTS -->.*?<!-- /noTTS -->` "" -}}
+{{- range findRESubmatch `(?s)<!-- tts((?:\s+\w+="[^"]*")*)\s*-->(.*?)<!-- /tts -->` $content -}}
+  {{- $text := index . 2 -}}
+  {{- with findRESubmatch `\ssay="([^"]*)"` (index . 1) 1 -}}
+    {{- $text = index . 0 1 -}}
+  {{- end -}}
+  {{- with findRESubmatch `\slang="([^"]*)"` (index . 1) 1 -}}
+    {{- $text = print "\uE000" (index . 0 1) "\uE001" $text "\uE002" -}}
+  {{- end -}}
+  {{- $content = replace $content (index . 0) $text 1 -}}
+{{- end -}}
 {{- $content = $content | markdownify -}}
 {{- $content = $content | replaceRE `(?s)<pre[^>]*>.*?</pre>` "" -}}
 {{- $content = $content | replaceRE `<code>([^<]*)</code>` `"${1}"` -}}
@@ -14,6 +25,7 @@
 {{- $content = $content | replaceRE `<br\s*/?>` "\n" -}}
 {{- $content = $content | replaceRE `<[^>]*>` "" -}}
 {{- $content = $content | htmlUnescape -}}
+{{- $content = partial "tts/substitute.html" (dict "text" $content "rules" $rules) -}}
 {{- $content = $content | replaceRE `[ \t]*\([ \t]*` ", " -}}
 {{- $content = $content | replaceRE `[ \t]*\)` "," -}}
 {{- $content = $content | replaceRE `,[ \t]*([,.;:!?])` "${1}" -}}

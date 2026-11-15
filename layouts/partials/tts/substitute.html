@@ -1,0 +1,35 @@
+{{- $text := .text -}}
+{{- range .rules -}}
+  {{- $match := .match -}}
+  {{- if not $match -}}
+    {{- errorf "text-to-speech: substitution without match: %v" . -}}
+  {{- end -}}
+  {{- $re := replaceRE `([\\.+*?()|\[\]{}^$])` `\${1}` $match -}}
+  {{- if findRE `^\w` $match -}}
+    {{- $re = print `\b` $re -}}
+  {{- end -}}
+  {{- if findRE `\w$` $match -}}
+    {{- $re = print $re `\b` -}}
+  {{- end -}}
+  {{- $repl := "${0}" -}}
+  {{- with .say -}}
+    {{- $repl = replace . "$" "$$" -}}
+  {{- end -}}
+  {{- with .lang -}}
+    {{- $repl = print "\uE000" . "\uE001" $repl "\uE002" -}}
+  {{- end -}}
+  {{- $out := "" -}}
+  {{- range $i, $part := split $text "\uE000" -}}
+    {{- if $i -}}
+      {{- with findRESubmatch `(?s)^([^\x{E002}]*\x{E002})(.*)$` $part 1 -}}
+        {{- $out = print $out "\uE000" (index . 0 1) (replaceRE $re $repl (index . 0 2)) -}}
+      {{- else -}}
+        {{- $out = print $out "\uE000" $part -}}
+      {{- end -}}
+    {{- else -}}
+      {{- $out = replaceRE $re $repl $part -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $text = $out -}}
+{{- end -}}
+{{- return $text -}}

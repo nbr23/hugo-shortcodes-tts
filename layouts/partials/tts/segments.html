@@ -1,0 +1,19 @@
+{{- $segments := slice -}}
+{{- range $i, $part := split . "\uE000" -}}
+  {{- $text := $part -}}
+  {{- if $i -}}
+    {{- $m := findRESubmatch `(?s)^([^\x{E001}\x{E002}]*)\x{E001}([^\x{E002}]*)\x{E002}(.*)$` $part 1 -}}
+    {{- if not $m -}}
+      {{- errorf "text-to-speech: malformed language segment: %q" $part -}}
+    {{- end -}}
+    {{- $m = index $m 0 -}}
+    {{- if findRE `[\pL\pN]` (index $m 2) -}}
+      {{- $segments = $segments | append (dict "lang" (index $m 1) "text" (index $m 2)) -}}
+    {{- end -}}
+    {{- $text = index $m 3 -}}
+  {{- end -}}
+  {{- if findRE `[\pL\pN]` $text -}}
+    {{- $segments = $segments | append (dict "lang" "" "text" $text) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $segments -}}

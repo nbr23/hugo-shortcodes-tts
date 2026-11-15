@@ -160,6 +160,36 @@ Before the text is sent, it is rewritten so it reads better aloud:
 - Underscores between words become spaces, ` & ` becomes ` and `
 - Parentheses become commas
 
+### Alternate texts and languages
+
+`params.tts.substitutions` lists terms to say differently, or in another language. A post can add its own under `tts.substitutions` in its front matter; those are applied first, so they win over the site's:
+
+```yaml
+params:
+  tts:
+    substitutions:
+      - match: kubectl
+        say: cube control
+      - match: déjà vu
+        lang: fr
+    languages:
+      fr:
+        apiUrl: "http://tts-fr:8880/v1/audio/speech"
+        voice: "default"
+```
+
+`match` is literal and case-sensitive, and only matches whole words. It is matched against the text as the reader sees it, before the rewrites above. `say` replaces it, `lang` reads it (or its `say`) in that language, and both can be set.
+
+For a one-off, mark up the text inline. The comments do not show on the page:
+
+```
+{{% text-to-speech %}}
+Released in <!-- tts say="twenty twenty six" -->2026<!-- /tts -->, to a chorus of <!-- tts lang="fr" -->bon appétit<!-- /tts -->.
+{{% /text-to-speech %}}
+```
+
+Each language span is sent as its own request, using `params.tts.languages.<lang>`: `apiUrl`, `voice`, `model`, `speed` and `instructions`, each falling back to the post's settings. A server that only speaks one language, like Phonon, needs a second server for the other. The audio is joined, so this requires `mp3`, and expect a short pause around each span. A `lang` with no settings fails the build. With `provider: "gopipertts"`, only `apiUrl` and `voice` apply.
+
 ### Generate TTS
 
 See the example project for a sample configuration and Makefile to build your static site with TTS:

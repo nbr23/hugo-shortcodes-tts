@@ -1,81 +1,118 @@
 {{- if not .Site.Params.Tts.Disabled -}}
-{{- $content := partial "tts/speech-text.html" (dict "inner" .Inner "title" $.Page.Title) -}}
+{{- $rules := slice -}}
+{{- with .Page.Params.tts -}}
+  {{- with .substitutions -}}
+    {{- $rules = $rules | append . -}}
+  {{- end -}}
+{{- end -}}
+{{- with .Site.Params.Tts.substitutions -}}
+  {{- $rules = $rules | append . -}}
+{{- end -}}
+{{- $content := partial "tts/speech-text.html" (dict "inner" .Inner "title" $.Page.Title "rules" $rules) -}}
 
 
 {{- $filename := .Page.File.ContentBaseName -}}
-{{- $apiEndpoint := .Site.Params.Tts.ApiUrl -}}
 {{- $provider := .Site.Params.Tts.Provider | default "gopipertts" -}}
 {{- $outputFormat := .Get "outputFormat" | default (.Site.Params.Tts.OutputFormat | default "mp3") -}}
-{{- $voice := .Get "voice" | default .Site.Params.Tts.Voice -}}
-{{- $model := .Get "model" | default .Site.Params.Tts.Model -}}
-{{- $speed := .Get "speed" | default .Site.Params.Tts.Speed -}}
-{{- $instructions := .Get "instructions" | default .Site.Params.Tts.Instructions -}}
+{{- $defaults := dict
+   "url" .Site.Params.Tts.ApiUrl
+   "voice" (.Get "voice" | default .Site.Params.Tts.Voice)
+   "model" (.Get "model" | default .Site.Params.Tts.Model)
+   "speed" (.Get "speed" | default .Site.Params.Tts.Speed)
+   "instructions" (.Get "instructions" | default .Site.Params.Tts.Instructions)
+-}}
+{{- $languages := .Site.Params.Tts.languages | default dict -}}
 {{- $timeout := .Site.Params.Tts.Timeout | default "10m" -}}
 
 {{- $headers := dict "Content-Type" "application/json" -}}
-{{- $bodies := slice -}}
 {{- if eq $provider "openai" -}}
   {{- with .Site.Params.Tts.ApiKey -}}
     {{- $headers = merge $headers (dict "Authorization" (print "Bearer " .)) -}}
   {{- end -}}
-  {{- $chunks := slice -}}
-  {{- $chunk := "" -}}
-  {{- range split $content "\n" -}}
-    {{- if and $chunk (gt (add (len $chunk) (len .) 1) 4000) -}}
-      {{- $chunks = $chunks | append $chunk -}}
-      {{- $chunk = . -}}
-    {{- else if $chunk -}}
-      {{- $chunk = print $chunk "\n" . -}}
-    {{- else -}}
-      {{- $chunk = . -}}
+{{- end -}}
+
+{{- $requests := slice -}}
+{{- range partial "tts/segments.html" $content -}}
+  {{- $overrides := dict -}}
+  {{- with .lang -}}
+    {{- $code := . -}}
+    {{- $lang := index $languages . | default dict -}}
+    {{- with index $lang "apiurl" -}}
+      {{- $overrides = merge $overrides (dict "url" .) -}}
+    {{- end -}}
+    {{- range slice "voice" "model" "speed" "instructions" -}}
+      {{- $key := . -}}
+      {{- with index $lang $key -}}
+        {{- $overrides = merge $overrides (dict $key .) -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if not $overrides -}}
+      {{- errorf "text-to-speech: %s: params.tts.languages.%s sets no apiUrl, voice, model, speed or instructions" $filename $code -}}
     {{- end -}}
   {{- end -}}
-  {{- with trim $chunk " \n" -}}
-    {{- $chunks = $chunks | append . -}}
-  {{- end -}}
-  {{- if and (gt (len $chunks) 1) (ne $outputFormat "mp3") -}}
-    {{- errorf "text-to-speech: %s needs %d requests, only mp3 output can be joined" $filename (len $chunks) -}}
-  {{- end -}}
-  {{- range $chunks -}}
-    {{- $body := dict "input" . "response_format" $outputFormat -}}
-    {{- with $voice -}}
+  {{- $settings := merge $defaults $overrides -}}
+  {{- if eq $provider "openai" -}}
+    {{- $chunks := slice -}}
+    {{- $chunk := "" -}}
+    {{- range split .text "\n" -}}
+      {{- if and $chunk (gt (add (len $chunk) (len .) 1) 4000) -}}
+        {{- $chunks = $chunks | append $chunk -}}
+        {{- $chunk = . -}}
+      {{- else if $chunk -}}
+        {{- $chunk = print $chunk "\n" . -}}
+      {{- else -}}
+        {{- $chunk = . -}}
+      {{- end -}}
+    {{- end -}}
+    {{- with trim $chunk " \n" -}}
+      {{- $chunks = $chunks | append . -}}
+    {{- end -}}
+    {{- range $chunks -}}
+      {{- $body := dict "input" . "response_format" $outputFormat -}}
+      {{- range slice "voice" "model" "instructions" -}}
+        {{- $key := . -}}
+        {{- with index $settings $key -}}
+          {{- $body = merge $body (dict $key .) -}}
+        {{- end -}}
+      {{- end -}}
+      {{- with $settings.speed -}}
+        {{- $body = merge $body (dict "speed" (float .)) -}}
+      {{- end -}}
+      {{- $requests = $requests | append (dict "url" $settings.url "body" $body) -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $body := dict "text" .text "outputFormat" $outputFormat -}}
+    {{- with $overrides.voice -}}
       {{- $body = merge $body (dict "voice" .) -}}
     {{- end -}}
-    {{- with $model -}}
-      {{- $body = merge $body (dict "model" .) -}}
-    {{- end -}}
-    {{- with $speed -}}
-      {{- $body = merge $body (dict "speed" (float .)) -}}
-    {{- end -}}
-    {{- with $instructions -}}
-      {{- $body = merge $body (dict "instructions" .) -}}
-    {{- end -}}
-    {{- $bodies = $bodies | append $body -}}
+    {{- $requests = $requests | append (dict "url" $settings.url "body" $body) -}}
   {{- end -}}
-{{- else -}}
-  {{- $bodies = $bodies | append (dict "text" $content "outputFormat" $outputFormat) -}}
+{{- end -}}
+{{- if and (gt (len $requests) 1) (ne $outputFormat "mp3") -}}
+  {{- errorf "text-to-speech: %s needs %d requests, only mp3 output can be joined" $filename (len $requests) -}}
 {{- end -}}
 
 {{- $audio := "" -}}
-{{- range $bodies -}}
+{{- range $requests -}}
+  {{- $url := .url -}}
   {{- $opts := dict
      "method" "post"
-     "body" (. | jsonify)
+     "body" (.body | jsonify)
      "headers" $headers
      "timeout" $timeout
   -}}
-  {{- with try (resources.GetRemote $apiEndpoint $opts) -}}
+  {{- with try (resources.GetRemote $url $opts) -}}
     {{- with .Err -}}
       {{- $detail := . -}}
       {{- $data := .Cause.Data -}}
       {{- with $data.Status -}}
         {{- $detail = printf "%s %.500s" . $data.Body -}}
       {{- end -}}
-      {{- errorf "text-to-speech: %s: %s: %s" $filename $apiEndpoint $detail -}}
+      {{- errorf "text-to-speech: %s: %s: %s" $filename $url $detail -}}
     {{- else with .Value -}}
       {{- $audio = print $audio .Content -}}
     {{- else -}}
-      {{- errorf "text-to-speech: %s: %s returned no audio (404)" $filename $apiEndpoint -}}
+      {{- errorf "text-to-speech: %s: %s returned no audio (404)" $filename $url -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
