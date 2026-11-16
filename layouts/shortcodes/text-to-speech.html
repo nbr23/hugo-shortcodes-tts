@@ -125,6 +125,14 @@
     <audio class="text-to-speech-audio" controls>
       <source src="{{ $audioURL }}" type="{{ if eq $outputFormat "mp3" }}audio/mpeg{{ else }}audio/wav{{ end }}">
     </audio>
+    <select class="text-to-speech-rate" aria-label="Playback speed">
+      <option value="0.75">0.75×</option>
+      <option value="1" selected>1×</option>
+      <option value="1.25">1.25×</option>
+      <option value="1.5">1.5×</option>
+      <option value="1.75">1.75×</option>
+      <option value="2">2×</option>
+    </select>
   </div>
   <script>
     (function() {
@@ -139,6 +147,35 @@
           this.parentNode.classList.add('text-to-speech-started');
         }, { once: true });
       }
+      var key = 'tts-playback-rate';
+      var selects = document.querySelectorAll('.text-to-speech-rate');
+      function hasOption(select, value) {
+        for (var k = 0; k < select.options.length; k++) {
+          if (select.options[k].value === value) return true;
+        }
+        return false;
+      }
+      function setRate(value) {
+        for (var k = 0; k < players.length; k++) {
+          players[k].defaultPlaybackRate = parseFloat(value);
+          players[k].playbackRate = parseFloat(value);
+        }
+        for (var m = 0; m < selects.length; m++) selects[m].value = value;
+      }
+      function onChange() {
+        setRate(this.value);
+        try { localStorage.setItem(key, this.value); } catch (e) {}
+      }
+      function onRateChange() {
+        var value = String(this.playbackRate);
+        var select = this.parentNode.querySelector('.text-to-speech-rate');
+        if (select && hasOption(select, value)) select.value = value;
+      }
+      for (var n = 0; n < selects.length; n++) selects[n].addEventListener('change', onChange);
+      for (var p = 0; p < players.length; p++) players[p].addEventListener('ratechange', onRateChange);
+      var saved = null;
+      try { saved = localStorage.getItem(key); } catch (e) {}
+      if (saved && selects.length && hasOption(selects[0], saved)) setRate(saved);
     })();
   </script>
 {{- else -}}

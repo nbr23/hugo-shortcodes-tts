@@ -22,7 +22,7 @@ params:
     provider: "gopipertts"  # Optional: "gopipertts" (default) or "openai"
     voice: "default"  # Optional, openai provider only: voice name sent to the server
     model: "gpt-4o-mini-tts"  # Optional, openai provider only: model name sent to the server
-    speed: 1.0  # Optional, openai provider only: playback speed sent to the server
+    speed: 1.0  # Optional, openai provider only: synthesis speed sent to the server
     instructions: "Speak calmly"  # Optional, openai provider only: voice instructions sent to the server
     timeout: "10m"  # Optional: per-request timeout (default 10m)
 ```
@@ -38,7 +38,7 @@ theme = [..., 'hugo-shortcodes-tts']
   Provider = "gopipertts"  # Optional: "gopipertts" (default) or "openai"
   Voice = "default"  # Optional, openai provider only: voice name sent to the server
   Model = "gpt-4o-mini-tts"  # Optional, openai provider only: model name sent to the server
-  Speed = 1.0  # Optional, openai provider only: playback speed sent to the server
+  Speed = 1.0  # Optional, openai provider only: synthesis speed sent to the server
   Instructions = "Speak calmly"  # Optional, openai provider only: voice instructions sent to the server
   Timeout = "10m"  # Optional: per-request timeout (default 10m)
 ```
@@ -46,6 +46,8 @@ theme = [..., 'hugo-shortcodes-tts']
 With `provider: "openai"`, `apiUrl` points at any OpenAI-compatible speech endpoint, e.g. Phonon's [ptts-openai-server](https://github.com/gradium-ai/xn-ptts) at `http://phonon:8880/v1/audio/speech`. Text is sent in chunks of at most 4000 characters and the audio is concatenated, so posts longer than that require `mp3`.
 
 `voice`, `model`, `speed` and `instructions` are only sent when set, so a server that rejects one of them can be used by leaving it out.
+
+`speed` is baked into the generated audio, and changing it regenerates every post. Readers pick their own playback speed in the player, which costs nothing (see [Styling](#styling)).
 
 #### OpenAI API
 
@@ -97,6 +99,8 @@ The shortcode renders a `.text-to-speech-container` div that is hidden by defaul
 ```
 
 The `display: none` is required — the shortcode's inline script sets it to `flex` when the browser can play the audio.
+
+The container also holds a `.text-to-speech-rate` select for the playback speed, from `0.75×` to `2×`. It sets `playbackRate` on every player on the page, and the choice is saved in `localStorage` under `tts-playback-rate`.
 
 Once playback has started, the container gets a `.text-to-speech-started` class that stays on even when paused. Use it to keep the player in view while scrolling:
 
