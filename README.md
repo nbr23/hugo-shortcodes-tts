@@ -159,7 +159,7 @@ Before the text is sent, it is rewritten so it reads better aloud:
 - Fenced code blocks are never spoken
 - Inline code is wrapped in double quotes: `` `CLAUDE.md` `` becomes `"CLAUDE dot md"`
 - Headers, list items and the title get a trailing `.` (unless they already end in punctuation) to force a pause
-- `e.g.`, `i.e.`, `etc.` and `vs.` are expanded
+- `e.g.`, `i.e.`, `etc` (with or without its period, but not in a path like `/etc/hosts`) and `vs.` are expanded
 - A dot followed by a lowercase letter is spoken: `settings.json` becomes `settings dot json`, `.git` becomes `dot git`
 - Underscores between words become spaces, ` & ` becomes ` and `
 - Parentheses become commas
