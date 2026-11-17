@@ -88,19 +88,17 @@ You will likely need to increase the timeout for page generation as well as the 
 
 ### Styling
 
-The shortcode renders a `.text-to-speech-container` div that is hidden by default and displayed via JavaScript when the browser supports audio playback. You'll need to add some CSS to style it. For example:
+The shortcode renders a `.text-to-speech-container` div holding a native `<audio controls>` player, so it works without JavaScript; browsers that can't play it, such as text browsers, show a download link instead. You'll need to add some CSS to style it. For example:
 
 ```css
 .text-to-speech-container {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 16px;
 }
 ```
 
-The `display: none` is required — the shortcode's inline script sets it to `flex` when the browser can play the audio.
-
-The container also holds a `.text-to-speech-rate` select for the playback speed, from `0.75×` to `2×`. It sets `playbackRate` on every player on the page, and the choice is saved in `localStorage` under `tts-playback-rate`.
+When JavaScript runs, the shortcode's inline script adds a `.text-to-speech-rate` select to the container for the playback speed, from `0.75×` to `2×`. It sets `playbackRate` on every player on the page, and the choice is saved in `localStorage` under `tts-playback-rate`.
 
 Once playback has started, the container gets a `.text-to-speech-started` class that stays on even when paused. Use it to keep the player in view while scrolling:
 
@@ -156,7 +154,7 @@ And we will resume speaking here
 
 Before the text is sent, it is rewritten so it reads better aloud:
 
-- Fenced code blocks are never spoken
+- Fenced code blocks, `<script>` and `<style>` elements, and the fallback text inside `<video>` and `<audio>` are never spoken
 - Inline code is wrapped in double quotes: `` `CLAUDE.md` `` becomes `"CLAUDE dot md"`
 - Headers, list items and the title get a trailing `.` (unless they already end in punctuation) to force a pause
 - `e.g.`, `i.e.`, `etc` (with or without its period, but not in a path like `/etc/hosts`) and `vs.` are expanded

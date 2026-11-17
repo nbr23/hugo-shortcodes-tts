@@ -135,22 +135,26 @@
     <span class="text-to-speech-label">Listen to this post:</span>
     <audio class="text-to-speech-audio" controls>
       <source src="{{ $audioURL }}" type="{{ if eq $outputFormat "mp3" }}audio/mpeg{{ else }}audio/wav{{ end }}">
+      <a href="{{ $audioURL }}">Download the audio</a>
     </audio>
-    <select class="text-to-speech-rate" aria-label="Playback speed">
-      <option value="0.75">0.75×</option>
-      <option value="1" selected>1×</option>
-      <option value="1.25">1.25×</option>
-      <option value="1.5">1.5×</option>
-      <option value="1.75">1.75×</option>
-      <option value="2">2×</option>
-    </select>
   </div>
   <script>
     (function() {
-      var a = document.createElement('audio');
-      if (a.canPlayType && a.canPlayType('audio/wav')) {
-        var els = document.querySelectorAll('.text-to-speech-container');
-        for (var i = 0; i < els.length; i++) els[i].style.display = 'flex';
+      var rates = ['0.75', '1', '1.25', '1.5', '1.75', '2'];
+      var containers = document.querySelectorAll('.text-to-speech-container');
+      for (var i = 0; i < containers.length; i++) {
+        if (containers[i].querySelector('.text-to-speech-rate')) continue;
+        var rate = document.createElement('select');
+        rate.className = 'text-to-speech-rate';
+        rate.setAttribute('aria-label', 'Playback speed');
+        for (var r = 0; r < rates.length; r++) {
+          var option = document.createElement('option');
+          option.value = rates[r];
+          option.textContent = rates[r] + '\u00d7';
+          option.selected = rates[r] === '1';
+          rate.appendChild(option);
+        }
+        containers[i].appendChild(rate);
       }
       var players = document.querySelectorAll('.text-to-speech-audio');
       for (var j = 0; j < players.length; j++) {

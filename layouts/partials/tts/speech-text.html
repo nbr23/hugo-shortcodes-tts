@@ -16,6 +16,12 @@
 {{- end -}}
 {{- $content = $content | markdownify -}}
 {{- $content = $content | replaceRE `(?s)<pre[^>]*>.*?</pre>` "" -}}
+{{- range slice "script" "style" -}}
+  {{- $content = $content | replaceRE (printf `(?is)<%s\b.*?</%s\s*>` . .) "" -}}
+{{- end -}}
+{{- range findRE `(?is)<(?:video|audio)\b.*?</(?:video|audio)\s*>` $content | uniq -}}
+  {{- $content = replace $content . (. | replaceRE `>[^<]*[^\s<][^<]*<` "><" | replaceRE `<[^>]*>` "") -}}
+{{- end -}}
 {{- $content = $content | replaceRE `<code>([^<]*)</code>` `"${1}"` -}}
 {{- $content = $content | replaceRE `([^.?!:;,\s>])((?:\s*</[^>]+>)*)\s*</(h[1-6]|li)>` "${1}.${2}</${3}>" -}}
 {{- $content = $content | replaceRE `</h[1-6]>` "\n\n" -}}
