@@ -93,6 +93,7 @@
 {{- end -}}
 
 {{- $audio := "" -}}
+{{- $failed := false -}}
 {{- range $requests -}}
   {{- $url := .url -}}
   {{- $opts := dict
@@ -109,12 +110,17 @@
         {{- $detail = printf "%s %.500s" . $data.Body -}}
       {{- end -}}
       {{- errorf "text-to-speech: %s: %s: %s" $filename $url $detail -}}
+      {{- $failed = true -}}
     {{- else with .Value -}}
       {{- $audio = print $audio .Content -}}
     {{- else -}}
       {{- errorf "text-to-speech: %s: %s returned no audio (404)" $filename $url -}}
+      {{- $failed = true -}}
     {{- end -}}
   {{- end -}}
+{{- end -}}
+{{- if $failed -}}
+  {{- $audio = "" -}}
 {{- end -}}
 
 {{- with $audio -}}
