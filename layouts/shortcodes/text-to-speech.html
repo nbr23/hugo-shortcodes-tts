@@ -120,6 +120,11 @@
 {{- with $audio -}}
   {{- $audioResource := . | resources.FromString (printf "audio/tts/%s.%s" $filename $outputFormat) -}}
   {{- $audioURL := $audioResource.Permalink -}}
+  {{- $duration := 0 -}}
+  {{- if eq $outputFormat "mp3" -}}
+    {{- $duration = partial "tts/mp3-duration.html" . -}}
+  {{- end -}}
+  {{- $.Page.Store.Set "tts" (dict "url" $audioURL "length" (len .) "type" $audioResource.MediaType.Type "duration" $duration) -}}
   <div class="text-to-speech-container">
     <span class="text-to-speech-label">Listen to this post:</span>
     <audio class="text-to-speech-audio" controls>

@@ -1,0 +1,16 @@
+{{- $duration := 0 -}}
+{{- if and (ge (len .) 3) (not (hasPrefix . "ID3")) -}}
+  {{- $b1 := index . 1 -}}
+  {{- $b2 := index . 2 -}}
+  {{- $version := mod (div $b1 8) 4 -}}
+  {{- $bitrateIndex := div $b2 16 -}}
+  {{- if and (eq (index . 0) 255) (ge $b1 224) (eq (mod (div $b1 2) 4) 1) (ne $version 1) (gt $bitrateIndex 0) (lt $bitrateIndex 15) -}}
+    {{- $kbps := slice 0 8 16 24 32 40 48 56 64 80 96 112 128 144 160 -}}
+    {{- if eq $version 3 -}}
+      {{- $kbps = slice 0 32 40 48 56 64 80 96 112 128 160 192 224 256 320 -}}
+    {{- end -}}
+    {{- /* Assumes constant bitrate, which the supported providers emit; a VBR file would need its Xing frame read */ -}}
+    {{- $duration = div (mul (len .) 8) (mul (index $kbps $bitrateIndex) 1000) -}}
+  {{- end -}}
+{{- end -}}
+{{- return $duration -}}

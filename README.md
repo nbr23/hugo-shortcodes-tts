@@ -194,6 +194,20 @@ Released in <!-- tts say="twenty twenty six" -->2026<!-- /tts -->, to a chorus o
 
 Each language span is sent as its own request, using `params.tts.languages.<lang>`: `apiUrl`, `voice`, `model`, `speed` and `instructions`, each falling back to the post's settings. A server that only speaks one language, like Phonon, needs a second server for the other. The audio is joined, so this requires `mp3`, and expect a short pause around each span. A `lang` with no settings fails the build. With `provider: "gopipertts"`, only `apiUrl` and `voice` apply.
 
+### Podcast feeds
+
+Once rendered, the shortcode stores the generated audio on the page as `.Store.Get "tts"`, a map with `url`, `length` (bytes), `type` (MIME type) and `duration` (whole seconds, mp3 only, `0` when unknown). A podcast feed template can read it for each item's `<enclosure>` and `<itunes:duration>`, after rendering the page's content so the shortcode has run:
+
+```go-html-template
+{{ $_ := .Content }}
+{{ with .Store.Get "tts" }}
+  <enclosure url="{{ .url }}" length="{{ .length }}" type="{{ .type }}"/>
+  {{ with .duration }}<itunes:duration>{{ . }}</itunes:duration>{{ end }}
+{{ end }}
+```
+
+Pages without audio, including every page when `disabled` is set, have no `tts` entry. The duration is derived from the byte length and the first frame's bitrate, so it assumes a constant-bitrate mp3.
+
 ### Generate TTS
 
 See the example project for a sample configuration and Makefile to build your static site with TTS:
